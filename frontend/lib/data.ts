@@ -17,7 +17,22 @@ export type Bookmark = {
   is_book: boolean;
   books: Book[];
   summary: string;
+  links?: string[];
 };
+
+// Purchase-shaped domains — a tweet linking one of these is offering the buy
+// link itself; prefer it over a generated amazon.fr search.
+const PURCHASE_RE =
+  /amazon\.|amzn\.|fnac\.com|gumroad\.com|kobo\.com|audible\.|goodreads\.com|leslibraires\.fr|placedeslibraires\.fr|cultura\.com/i;
+
+export function purchaseLink(b: Bookmark): string | null {
+  return (b.links || []).find((u) => PURCHASE_RE.test(u)) || null;
+}
+
+export function amazonSearchLink(bk: Book): string {
+  const q = [bk.title, bk.author].filter(Boolean).join(" ");
+  return `https://www.amazon.fr/s?k=${encodeURIComponent(q)}&i=stripbooks`;
+}
 
 export const bookmarks = raw as Bookmark[];
 
@@ -63,6 +78,7 @@ export type AggBook = {
   author: string | null;
   count: number;
   tweetIds: string[];
+  link: string | null; // purchase link from a source tweet, when one had it
 };
 
 // Aggregate extracted books across tweets, deduped by normalized title.
@@ -74,12 +90,20 @@ export function aggregatedBooks(): AggBook[] {
       const key = bk.title.toLowerCase().replace(/[^a-z0-9à-ÿ]+/gi, " ").trim();
       if (!key) continue;
       const existing = map.get(key);
+      const link = purchaseLink(b);
       if (existing) {
         existing.count += 1;
         existing.tweetIds.push(b.id);
         if (!existing.author && bk.author) existing.author = bk.author;
+        if (!existing.link && link) existing.link = link;
       } else {
-        map.set(key, { title: bk.title, author: bk.author, count: 1, tweetIds: [b.id] });
+        map.set(key, {
+          title: bk.title,
+          author: bk.author,
+          count: 1,
+          tweetIds: [b.id],
+          link,
+        });
       }
     }
   }

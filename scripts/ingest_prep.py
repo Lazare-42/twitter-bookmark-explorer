@@ -23,6 +23,22 @@ enriched = json.load(open('frontend/data/enriched.json'))
 seen = {x['id'] for x in enriched}
 
 
+def tweet_links(b):
+    m = b.get('metadata', {})
+    out = []
+    for u in (m.get('legacy', {}).get('entities', {}) or {}).get('urls', []):
+        if u.get('expanded_url'):
+            out.append(u['expanded_url'])
+    try:
+        es = m['note_tweet']['note_tweet_results']['result']['entity_set']
+        for u in es.get('urls', []):
+            if u.get('expanded_url'):
+                out.append(u['expanded_url'])
+    except Exception:
+        pass
+    return out
+
+
 def compact(b):
     m = b.get('metadata', {})
     long_text = None
@@ -39,6 +55,7 @@ def compact(b):
                    'orig': x.get('original')} for x in (b.get('media') or [])],
         'quoted': b.get('quoted_status'),
         'likes': b.get('favorite_count'), 'views': b.get('views_count'),
+        'links': tweet_links(b),
     }
 
 

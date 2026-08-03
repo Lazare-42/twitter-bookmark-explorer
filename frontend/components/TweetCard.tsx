@@ -1,4 +1,4 @@
-import type { Bookmark } from "@/lib/data";
+import { amazonSearchLink, purchaseLink, type Bookmark } from "@/lib/data";
 
 export default function TweetCard({ b }: { b: Bookmark }) {
   const date = b.created_at.slice(0, 10);
@@ -35,12 +35,10 @@ export default function TweetCard({ b }: { b: Bookmark }) {
             <a
               key={i}
               className="book-chip"
-              href={`https://www.amazon.fr/s?k=${encodeURIComponent(
-                [bk.title, bk.author].filter(Boolean).join(" ")
-              )}&i=stripbooks`}
+              href={purchaseLink(b) || amazonSearchLink(bk)}
               target="_blank"
               rel="noopener noreferrer"
-              title="Search on amazon.fr"
+              title={purchaseLink(b) ? "Purchase link from tweet" : "Search on amazon.fr"}
             >
               {bk.title}
               {bk.author ? ` — ${bk.author}` : ""} 🛒

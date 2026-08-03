@@ -1,4 +1,4 @@
-import { aggregatedBooks, bookRecs } from "@/lib/data";
+import { aggregatedBooks, amazonSearchLink, bookRecs } from "@/lib/data";
 import FilteredTweetList from "@/components/FilteredTweetList";
 
 export default function BooksPage() {
@@ -26,12 +26,10 @@ export default function BooksPage() {
             <tr key={i}>
               <td className="title">
                 <a
-                  href={`https://www.amazon.fr/s?k=${encodeURIComponent(
-                    [bk.title, bk.author].filter(Boolean).join(" ")
-                  )}&i=stripbooks`}
+                  href={bk.link || amazonSearchLink(bk)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="Search on amazon.fr"
+                  title={bk.link ? "Purchase link from tweet" : "Search on amazon.fr"}
                 >
                   {bk.title} <span className="buy">🛒</span>
                 </a>
