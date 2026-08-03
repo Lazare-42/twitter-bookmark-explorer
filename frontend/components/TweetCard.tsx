@@ -1,4 +1,5 @@
 import { amazonSearchLink, purchaseLink, type Bookmark } from "@/lib/data";
+import SmartLink from "./SmartLink";
 
 export default function TweetCard({ b }: { b: Bookmark }) {
   const date = b.created_at.slice(0, 10);
@@ -12,9 +13,7 @@ export default function TweetCard({ b }: { b: Bookmark }) {
         </div>
         <div className="meta">
           <div>{date}</div>
-          <a href={b.url} target="_blank" rel="noopener noreferrer">
-            open on X ↗
-          </a>
+          <SmartLink href={b.url}>open on X ↗</SmartLink>
         </div>
       </div>
       <div className="tweet-text">{b.text}</div>
@@ -32,17 +31,15 @@ export default function TweetCard({ b }: { b: Bookmark }) {
       {b.books.length > 0 && (
         <div className="tweet-books">
           {b.books.map((bk, i) => (
-            <a
+            <SmartLink
               key={i}
               className="book-chip"
               href={purchaseLink(b) || amazonSearchLink(bk)}
-              target="_blank"
-              rel="noopener noreferrer"
               title={purchaseLink(b) ? "Purchase link from tweet" : "Search on amazon.fr"}
             >
               {bk.title}
               {bk.author ? ` — ${bk.author}` : ""} 🛒
-            </a>
+            </SmartLink>
           ))}
         </div>
       )}

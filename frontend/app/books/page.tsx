@@ -1,5 +1,6 @@
 import { aggregatedBooks, amazonSearchLink, bookRecs } from "@/lib/data";
 import FilteredTweetList from "@/components/FilteredTweetList";
+import SmartLink from "@/components/SmartLink";
 
 export default function BooksPage() {
   const books = aggregatedBooks();
@@ -25,28 +26,20 @@ export default function BooksPage() {
           {books.map((bk, i) => (
             <tr key={i}>
               <td className="title">
-                <a
+                <SmartLink
                   href={bk.link || amazonSearchLink(bk)}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   title={bk.link ? "Purchase link from tweet" : "Search on amazon.fr"}
                 >
                   {bk.title} <span className="buy">🛒</span>
-                </a>
+                </SmartLink>
               </td>
               <td className="author">{bk.author || "—"}</td>
               <td className="n">{bk.count}</td>
               <td>
                 {bk.tweetIds.slice(0, 5).map((id, j) => (
-                  <a
-                    key={id}
-                    className="src"
-                    href={`https://twitter.com/i/status/${id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <SmartLink key={id} className="src" href={`https://twitter.com/i/status/${id}`}>
                     [{j + 1}]
-                  </a>
+                  </SmartLink>
                 ))}
               </td>
             </tr>
