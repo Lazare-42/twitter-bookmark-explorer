@@ -24,7 +24,18 @@ export default function BooksPage() {
         <tbody>
           {books.map((bk, i) => (
             <tr key={i}>
-              <td className="title">{bk.title}</td>
+              <td className="title">
+                <a
+                  href={`https://www.amazon.fr/s?k=${encodeURIComponent(
+                    [bk.title, bk.author].filter(Boolean).join(" ")
+                  )}&i=stripbooks`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Search on amazon.fr"
+                >
+                  {bk.title} <span className="buy">🛒</span>
+                </a>
+              </td>
               <td className="author">{bk.author || "—"}</td>
               <td className="n">{bk.count}</td>
               <td>

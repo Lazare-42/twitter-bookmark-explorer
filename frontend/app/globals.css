@@ -95,6 +95,9 @@ a { color: inherit; text-decoration: none; }
   padding: 3px 12px;
   font-size: 13px;
 }
+a.book-chip:hover { border-color: var(--accent); }
+.book-table .title a:hover { text-decoration: underline; }
+.book-table .buy { font-size: 12px; opacity: 0.7; }
 
 .book-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
 .book-table th, .book-table td {

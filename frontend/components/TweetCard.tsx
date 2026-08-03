@@ -32,10 +32,19 @@ export default function TweetCard({ b }: { b: Bookmark }) {
       {b.books.length > 0 && (
         <div className="tweet-books">
           {b.books.map((bk, i) => (
-            <span key={i} className="book-chip">
+            <a
+              key={i}
+              className="book-chip"
+              href={`https://www.amazon.fr/s?k=${encodeURIComponent(
+                [bk.title, bk.author].filter(Boolean).join(" ")
+              )}&i=stripbooks`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Search on amazon.fr"
+            >
               {bk.title}
-              {bk.author ? ` — ${bk.author}` : ""}
-            </span>
+              {bk.author ? ` — ${bk.author}` : ""} 🛒
+            </a>
           ))}
         </div>
       )}
