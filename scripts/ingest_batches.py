@@ -14,7 +14,8 @@ for x in new:
     imgs = sorted(glob.glob(f"data/media/{x['id']}_*.jpg"))
     imgs = [os.path.abspath(p) for p in imgs if os.path.getsize(p) > 1000]
     items.append({'id': x['id'], 'author': x['screen_name'],
-                  'text': x['text'][:800], 'images': imgs})
+                  'text': x['text'][:800], 'images': imgs,
+                  'links': x.get('links') or []})
 for n in range(0, len(items), BATCH):
     json.dump(items[n:n + BATCH],
               open(f'{run_dir}/batches/{n // BATCH:03d}.json', 'w'),

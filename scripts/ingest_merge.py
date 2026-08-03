@@ -32,11 +32,14 @@ if mode == 'pass1':
         theme = c.get('theme', 'other')
         books = [bk for bk in (c.get('books') or [])
                  if isinstance(bk, dict) and bk.get('title')]
-        enriched.append({**b,
-                         'theme': theme if theme in VALID else 'other',
-                         'is_book': bool(c.get('is_book')) or bool(books),
-                         'books': books,
-                         'summary': c.get('summary') or ''})
+        rec = {**b,
+               'theme': theme if theme in VALID else 'other',
+               'is_book': bool(c.get('is_book')) or bool(books),
+               'books': books,
+               'summary': c.get('summary') or ''}
+        if c.get('book_link'):
+            rec['book_link'] = c['book_link']
+        enriched.append(rec)
         added += 1
     json.dump(enriched, open('frontend/data/enriched.json', 'w'),
               ensure_ascii=False)
@@ -52,7 +55,8 @@ if mode == 'pass1':
         imgs = [os.path.abspath(p)
                 for p in sorted(glob.glob(f"data/media/{b['id']}_*.jpg"))
                 if os.path.getsize(p) > 1000]
-        items.append({'id': b['id'], 'text': b['text'][:500], 'images': imgs})
+        items.append({'id': b['id'], 'text': b['text'][:500], 'images': imgs,
+                      'links': b.get('links') or []})
     B = 15
     for n in range(0, len(items), B):
         json.dump(items[n:n + B],
@@ -72,6 +76,8 @@ elif mode == 'sweep':
             if x.get('is_book') and books:
                 b['is_book'] = True
                 b['books'] = books
+                if x.get('book_link'):
+                    b['book_link'] = x['book_link']
                 added += 1
     json.dump(enriched, open('frontend/data/enriched.json', 'w'),
               ensure_ascii=False)

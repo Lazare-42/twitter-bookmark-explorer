@@ -18,6 +18,7 @@ export type Bookmark = {
   books: Book[];
   summary: string;
   links?: string[];
+  book_link?: string; // AI-judged: URL where the book itself can be bought/read
 };
 
 // Purchase-shaped domains — a tweet linking one of these is offering the buy
@@ -26,7 +27,7 @@ const PURCHASE_RE =
   /amazon\.|amzn\.|fnac\.com|gumroad\.com|kobo\.com|audible\.|goodreads\.com|leslibraires\.fr|placedeslibraires\.fr|cultura\.com/i;
 
 export function purchaseLink(b: Bookmark): string | null {
-  return (b.links || []).find((u) => PURCHASE_RE.test(u)) || null;
+  return b.book_link || (b.links || []).find((u) => PURCHASE_RE.test(u)) || null;
 }
 
 export function amazonSearchLink(bk: Book): string {

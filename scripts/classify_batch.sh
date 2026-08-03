@@ -6,7 +6,7 @@ in="${BATCH_DIR:-data/batches}/${n}.json"
 out="${CLS_DIR:-data/cls}/${n}.json"
 [ -s "$out" ] && exit 0
 
-PROMPT='You classify Twitter bookmarks into themes. Input: a JSON array of tweets, each with id, author, text, and "images" (local file paths of the tweet'"'"'s attached photos).
+PROMPT='You classify Twitter bookmarks into themes. Input: a JSON array of tweets, each with id, author, text, "images" (local file paths of the tweet'"'"'s attached photos), and optionally "links" (URLs the tweet contained).
 
 For EVERY tweet that has image paths, use the Read tool to look at each image — images often contain the real content (book covers, charts, screenshots, memes).
 
@@ -14,10 +14,11 @@ Themes (pick exactly ONE primary per tweet): ai, dev, investing, business, geopo
 - "books" as primary theme = tweet is mainly about books/reading.
 - Separately, is_book=true whenever the tweet recommends, praises, or shows any specific book(s) — including a photo of a book cover or a stack of books — even if the primary theme is something else.
 - If is_book, extract books: [{"title":"...","author":"..."}] with the author null when unknown. Read titles off the covers in images.
+- If is_book and one of the tweet'"'"'s links points to WHERE THE BOOK ITSELF can be bought, read, or downloaded (bookstore, publisher catalog page, archive.org book page, goodreads), set "book_link" to that URL. Articles ABOUT the book, newsletters, or unrelated links do NOT count — then book_link is null.
 - Also give each tweet a "summary": one short sentence (max 15 words, same language as tweet) saying what it is.
 
 Output: ONLY a raw JSON array, one object per input tweet, same order:
-[{"id":"...","theme":"...","is_book":false,"books":[],"summary":"..."}]
+[{"id":"...","theme":"...","is_book":false,"books":[],"book_link":null,"summary":"..."}]
 No markdown fences, no prose.'
 
 result=$(cat "$in" | claude -p "$PROMPT" --model claude-haiku-4-5-20251001 --allowedTools "Read" --output-format text 2>/dev/null)
