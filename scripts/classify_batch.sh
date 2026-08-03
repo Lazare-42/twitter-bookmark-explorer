@@ -2,8 +2,8 @@
 # Classify one batch file with headless claude (haiku, multimodal via Read).
 set -u
 n="$1"
-in="data/batches/${n}.json"
-out="data/cls/${n}.json"
+in="${BATCH_DIR:-data/batches}/${n}.json"
+out="${CLS_DIR:-data/cls}/${n}.json"
 [ -s "$out" ] && exit 0
 
 PROMPT='You classify Twitter bookmarks into themes. Input: a JSON array of tweets, each with id, author, text, and "images" (local file paths of the tweet'"'"'s attached photos).

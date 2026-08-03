@@ -2,8 +2,8 @@
 # Second pass: book-only detection sweep over previously unflagged tweets.
 set -u
 n="$1"
-in="data/batches2/${n}.json"
-out="data/cls2/${n}.json"
+in="${BATCH_DIR:-data/batches2}/${n}.json"
+out="${CLS_DIR:-data/cls2}/${n}.json"
 [ -s "$out" ] && exit 0
 
 PROMPT='You are hunting for BOOK references that a first classification pass may have missed. Input: JSON array of tweets with id, text, and "images" (local file paths of attached photos).
