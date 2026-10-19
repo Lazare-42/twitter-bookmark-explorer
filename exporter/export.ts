@@ -128,7 +128,7 @@ async function loggedIn(ctx: any): Promise<boolean> {
 
 // ── login: a small state machine over whatever X shows next ──────────────────
 const SEL = {
-  username: 'input[autocomplete="username"]',
+  username: 'input[name="username_or_email"], input[autocomplete~="username"]',
   password: 'input[name="password"]',
   challenge: 'input[data-testid="ocfEnterTextTextInput"]', // unusual-activity + 2FA + email-code steps
   twofa: 'input[name="text"][inputmode="numeric"], input[data-testid="LoginVerificationCodeForm-challengeInput"]',
@@ -153,16 +153,23 @@ async function login(ctx: any, page: any): Promise<void> {
   if (!USER || !PASS) throw new AuthError("logged out and X_USERNAME/X_PASSWORD not set");
   log("→ logging in");
   await page.goto("https://x.com/i/flow/login", { waitUntil: "domcontentloaded", timeout: 60_000 });
-  let codeAttempts = 0;
+  let codeAttempts = 0, usernameDone = false, passwordDone = false;
   for (let step = 0; step < 14; step++) {
     await sleep(jitter(2200, 3500));
     if (await loggedIn(ctx)) { log("✓ logged in"); return; }
+    await clickButton(page, [/^accept all cookies$/i]); // consent banner overlays the form
     const body = (await page.locator("body").innerText().catch(() => "")).toLowerCase();
+    const inputs = await page.locator("input:visible").evaluateAll((els: any[]) => els.map((e) => `${e.name || e.type}|${e.autocomplete}|${e.getAttribute("data-testid") || ""}`)).catch(() => []);
+    log(`  step ${step}: ${page.url()} inputs=[${inputs.join(", ")}] text="${body.slice(0, 140).replace(/\s+/g, " ")}"`);
+    if (step === 0 || step === 13) await page.screenshot({ path: join(dirname(OUT), `login-step${step}.png`) }).catch(() => {});
 
-    if (await page.locator(SEL.username).first().isVisible().catch(() => false)) {
-      await fillAndSubmit(page, SEL.username, USER, [/^next$/i]);
-    } else if (await page.locator(SEL.password).first().isVisible().catch(() => false)) {
-      await fillAndSubmit(page, SEL.password, PASS, [/^log in$/i]);
+    const pwVisible = await page.locator(SEL.password).first().isVisible().catch(() => false);
+    if (!usernameDone && (await page.locator(SEL.username).first().isVisible().catch(() => false))) {
+      await fillAndSubmit(page, SEL.username, USER, [/^(next|continue)$/i]);
+      usernameDone = true;
+    } else if (usernameDone && !passwordDone && pwVisible) {
+      await fillAndSubmit(page, SEL.password, PASS, [/^(log in|continue|sign in)$/i]);
+      passwordDone = true;
     } else if (await page.locator(SEL.challenge).first().isVisible().catch(() => false)) {
       // Distinguish by the page copy: identity re-check vs. verification code.
       const wantsCode = /verification code|confirmation code|authentication app|enter code|we sent|sent you/.test(body);
@@ -189,6 +196,7 @@ async function login(ctx: any, page: any): Promise<void> {
       log("  (waiting for next login step)", page.url());
     }
   }
+  await page.screenshot({ path: join(dirname(OUT), "login-failed.png") }).catch(() => {});
   if (!(await loggedIn(ctx))) throw new AuthError("login did not complete in 14 steps");
 }
 
@@ -294,9 +302,11 @@ async function main() {
     // First page fires on load; reload so the listener is attached for it.
     await page.reload({ waitUntil: "domcontentloaded" });
     let idle = 0, last = -1;
-    for (let i = 0; i < MAX_PAGES * 4 && !allKnownPage && idle < 6; i++) {
+    for (let i = 0; i < MAX_PAGES * 4 && !allKnownPage && idle < 8; i++) {
+      await page.mouse.move(jitter(500, 900), jitter(300, 600)).catch(() => {});
       await page.mouse.wheel(0, jitter(1400, 2400));
-      await sleep(jitter(1200, 2400));
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
+      await sleep(jitter(1800, 3200));
       if (records.size === last) idle++; else { idle = 0; last = records.size; }
     }
     if (pagesSeen === 0) throw new AuthError("no Bookmarks API response seen (session invalid or X changed)");
