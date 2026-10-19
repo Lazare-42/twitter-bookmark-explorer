@@ -13,10 +13,12 @@ cd "$(dirname "$0")/.."
 
 DATA_DIR="${BOOKMARKS_DATA_DIR:-/data/lazrossi/bookmarks-data}"
 export ENRICHED_PATH="$DATA_DIR/enriched.json"
+export COMPACT_PATH="$DATA_DIR/compact.json" STATE_PATH="$DATA_DIR/state.json"  # keep the git checkout clean
 export X_PROFILE="${X_PROFILE:-$DATA_DIR/x-profile}"
 mkdir -p "$DATA_DIR"
 # first run: seed the runtime file from the snapshot bundled in the repo
 [ -f "$ENRICHED_PATH" ] || cp frontend/data/enriched.json "$ENRICHED_PATH"
+[ -f "$COMPACT_PATH" ] || cp data/compact.json "$COMPACT_PATH"
 
 notify() {
   local tok="$HOME/.cache/signal-agent/arm.token"

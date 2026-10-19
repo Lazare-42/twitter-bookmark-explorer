@@ -15,6 +15,7 @@ import json, os, sys
 
 # runtime data file the site serves (see frontend/lib/data.ts); defaults to the bundled copy
 ENRICHED = os.environ.get('ENRICHED_PATH', 'frontend/data/enriched.json')
+COMPACT = os.environ.get('COMPACT_PATH', 'data/compact.json')
 
 export_path, run_dir = sys.argv[1], sys.argv[2]
 os.makedirs(f'{run_dir}/batches', exist_ok=True)
@@ -67,10 +68,10 @@ if not new:
     print('no new bookmarks in export')
     sys.exit(3)
 
-comp = json.load(open('data/compact.json'))
+comp = json.load(open(COMPACT))
 comp_ids = {x['id'] for x in comp}
 comp.extend(x for x in new if x['id'] not in comp_ids)
-json.dump(comp, open('data/compact.json', 'w'), ensure_ascii=False, indent=0)
+json.dump(comp, open(COMPACT, 'w'), ensure_ascii=False, indent=0)
 json.dump(new, open(f'{run_dir}/new.json', 'w'), ensure_ascii=False)
 
 # media: photos (small) + video/gif preview thumbs, max 2 per tweet

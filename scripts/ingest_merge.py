@@ -12,6 +12,7 @@ import json, os, sys, glob
 
 # runtime data file the site serves (see frontend/lib/data.ts); defaults to the bundled copy
 ENRICHED = os.environ.get('ENRICHED_PATH', 'frontend/data/enriched.json')
+STATE = os.environ.get('STATE_PATH', 'data/state.json')
 
 
 def save_enriched(data):
@@ -97,5 +98,5 @@ elif mode == 'sweep':
              'distinct_titles': len({bk['title'].lower()
                                      for x in enriched for bk in x['books']}),
              'last_run': os.path.basename(run_dir)}
-    json.dump(state, open('data/state.json', 'w'), indent=2)
+    json.dump(state, open(STATE, 'w'), indent=2)
     print(f"sweep added {added}; state: {state}")
