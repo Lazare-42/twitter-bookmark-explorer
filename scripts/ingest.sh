@@ -3,7 +3,7 @@
 #
 #   scripts/ingest.sh <export.json>
 #
-# Only bookmarks not already in frontend/data/enriched.json are processed:
+# Only bookmarks not already in $ENRICHED_PATH (default frontend/data/enriched.json) are processed:
 # extract → download media → AI pass 1 (theme + books, text + images) →
 # AI pass 2 (book-only sweep of unflagged) → merge → data/state.json watermark.
 # Idempotent: re-running with the same export is a no-op. Per-run artifacts in

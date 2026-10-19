@@ -13,13 +13,16 @@ Exits 3 when the export contains nothing new.
 """
 import json, os, sys
 
+# runtime data file the site serves (see frontend/lib/data.ts); defaults to the bundled copy
+ENRICHED = os.environ.get('ENRICHED_PATH', 'frontend/data/enriched.json')
+
 export_path, run_dir = sys.argv[1], sys.argv[2]
 os.makedirs(f'{run_dir}/batches', exist_ok=True)
 os.makedirs(f'{run_dir}/cls', exist_ok=True)
 os.makedirs('data/media', exist_ok=True)
 
 raw = json.load(open(export_path))
-enriched = json.load(open('frontend/data/enriched.json'))
+enriched = json.load(open(ENRICHED))
 seen = {x['id'] for x in enriched}
 
 

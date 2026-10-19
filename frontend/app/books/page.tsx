@@ -1,6 +1,9 @@
-import { aggregatedBooks, amazonSearchLink, bookRecs } from "@/lib/data";
+import { amazonSearchLink } from "@/lib/data";
+import { aggregatedBooks, bookRecs } from "@/lib/store";
 import FilteredTweetList from "@/components/FilteredTweetList";
 import SmartLink from "@/components/SmartLink";
+
+export const dynamic = "force-dynamic";
 
 export default function BooksPage() {
   const books = aggregatedBooks();

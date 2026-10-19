@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
-import { byTheme, themeCounts, THEME_LABELS } from "@/lib/data";
+import { THEME_LABELS } from "@/lib/data";
+import { byTheme } from "@/lib/store";
 import FilteredTweetList from "@/components/FilteredTweetList";
 
-export function generateStaticParams() {
-  return themeCounts().map((t) => ({ theme: t.theme }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function ThemePage({
   params,

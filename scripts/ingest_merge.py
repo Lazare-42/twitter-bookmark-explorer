@@ -10,8 +10,20 @@ Usage:
 """
 import json, os, sys, glob
 
+# runtime data file the site serves (see frontend/lib/data.ts); defaults to the bundled copy
+ENRICHED = os.environ.get('ENRICHED_PATH', 'frontend/data/enriched.json')
+
+
+def save_enriched(data):
+    # atomic: the running site re-reads this file when its mtime changes
+    tmp = ENRICHED + '.tmp'
+    with open(tmp, 'w') as f:
+        json.dump(data, f, ensure_ascii=False)
+    os.replace(tmp, ENRICHED)
+
+
 mode, run_dir = sys.argv[1], sys.argv[2]
-enriched = json.load(open('frontend/data/enriched.json'))
+enriched = json.load(open(ENRICHED))
 byid = {x['id']: x for x in enriched}
 new = json.load(open(f'{run_dir}/new.json'))
 
@@ -41,8 +53,7 @@ if mode == 'pass1':
             rec['book_link'] = c['book_link']
         enriched.append(rec)
         added += 1
-    json.dump(enriched, open('frontend/data/enriched.json', 'w'),
-              ensure_ascii=False)
+    save_enriched(enriched)
     # book-sweep batches for the new tweets that pass 1 left unflagged
     os.makedirs(f'{run_dir}/batches2', exist_ok=True)
     os.makedirs(f'{run_dir}/cls2', exist_ok=True)
@@ -79,8 +90,7 @@ elif mode == 'sweep':
                 if x.get('book_link'):
                     b['book_link'] = x['book_link']
                 added += 1
-    json.dump(enriched, open('frontend/data/enriched.json', 'w'),
-              ensure_ascii=False)
+    save_enriched(enriched)
     state = {'last_created_at': max(x['created_at'] for x in enriched),
              'total': len(enriched),
              'book_recs': sum(1 for x in enriched if x['is_book']),

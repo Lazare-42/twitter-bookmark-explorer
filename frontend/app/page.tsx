@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { themeCounts, bookmarks, bookRecs } from "@/lib/data";
+import { themeCounts, getBookmarks, bookRecs } from "@/lib/store";
+
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   const themes = themeCounts();
@@ -8,7 +10,7 @@ export default function Home() {
     <main>
       <h2 className="page-title">Themes</h2>
       <p className="page-sub">
-        {bookmarks.length} bookmarks, classified by AI (text + images). {nBooks} contain book
+        {getBookmarks().length} bookmarks, classified by AI (text + images). {nBooks} contain book
         recommendations.
       </p>
       <div className="theme-grid">

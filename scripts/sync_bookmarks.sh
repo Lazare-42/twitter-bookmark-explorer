@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Daily bookmarks sync: log into X (stealth Chromium) → export → incremental
+# ingest into the RUNTIME data file the site serves. No rebuild/redeploy needed.
+#
+#   scripts/sync_bookmarks.sh
+#
+# Env (set by the systemd unit; sensible defaults for manual runs):
+#   X_USERNAME / X_PASSWORD [/ X_EMAIL / X_TOTP_SECRET]   from sops bookmarks-sync-env
+#   BOOKMARKS_DATA_DIR   default /data/lazrossi/bookmarks-data (holds enriched.json + browser profile)
+# Auth trouble (exit 2 from the exporter) pings Signal.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+DATA_DIR="${BOOKMARKS_DATA_DIR:-/data/lazrossi/bookmarks-data}"
+export ENRICHED_PATH="$DATA_DIR/enriched.json"
+export X_PROFILE="${X_PROFILE:-$DATA_DIR/x-profile}"
+mkdir -p "$DATA_DIR"
+# first run: seed the runtime file from the snapshot bundled in the repo
+[ -f "$ENRICHED_PATH" ] || cp frontend/data/enriched.json "$ENRICHED_PATH"
+
+notify() {
+  local tok="$HOME/.cache/signal-agent/arm.token"
+  [ -r "$tok" ] || return 0
+  curl -s -m 15 -X POST http://127.0.0.1:8116/notify -H "X-Arm-Token: $(cat "$tok")" \
+    -H 'content-type: application/json' -d "$(printf '{"message":"%s"}' "$1")" >/dev/null || true
+}
+
+[ -d exporter/node_modules ] || (cd exporter && npm install --no-audit --no-fund)
+
+export_file="$DATA_DIR/exports/export-$(date +%Y%m%d-%H%M%S).json"
+mkdir -p "$DATA_DIR/exports"
+
+# headful Chromium under a virtual display is the stealthy mode
+set +e
+(cd exporter && xvfb-run -a ./node_modules/.bin/tsx export.ts --out "$export_file" --known "$ENRICHED_PATH")
+rc=$?
+set -e
+if [ $rc -eq 2 ]; then
+  notify "⚠️ bookmarks sync: X login failed and needs you (check journalctl --user -u bookmarks-sync). Re-run: systemctl --user start bookmarks-sync"
+  exit 2
+elif [ $rc -ne 0 ]; then
+  notify "⚠️ bookmarks sync: export failed (exit $rc). journalctl --user -u bookmarks-sync"
+  exit $rc
+fi
+
+scripts/ingest.sh "$export_file"
+# keep only the 7 newest raw exports (each is tens of MB)
+ls -1t "$DATA_DIR"/exports/export-*.json 2>/dev/null | tail -n +8 | xargs -r rm -f
+echo "sync done: $(python3 -c "import json;print(len(json.load(open('$ENRICHED_PATH'))))") bookmarks in $ENRICHED_PATH"
