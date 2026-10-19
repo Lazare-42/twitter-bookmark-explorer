@@ -2,7 +2,7 @@
  * X (Twitter) bookmarks exporter — stealth Chromium (cloakbrowser), persistent
  * profile, self-healing login.
  *
- *   node_modules/.bin/tsx export.ts --out /path/export.json [--known /path/enriched.json] [--max-pages 60]
+ *   node_modules/.bin/tsx export.ts --out /path/export.json [--known /path/enriched.json] [--max-pages 60] [--full]
  *
  * Flow
  *  1. Open x.com/i/bookmarks with the persistent profile. Session cookie
@@ -44,6 +44,8 @@ function arg(name: string, def = ""): string {
 const OUT = arg("out");
 const KNOWN = arg("known");
 const MAX_PAGES = Number(arg("max-pages", "60"));
+const FULL = process.argv.includes("--full"); // ignore known ids: scroll to the end (catch-up)
+const KNOWN_STREAK_STOP = 3; // stop after this many consecutive all-known pages
 if (!OUT && process.argv[1] === fileURLToPath(import.meta.url)) { console.error("usage: export.ts --out <file.json> [--known enriched.json] [--max-pages N]"); process.exit(1); }
 
 class AuthError extends Error {}
@@ -285,7 +287,7 @@ async function main() {
     await ensureSession(ctx, page);
 
     const records = new Map<string, any>();
-    let pagesSeen = 0, allKnownPage = false;
+    let pagesSeen = 0, knownStreak = 0, allKnownPage = false;
     page.on("response", async (res: any) => {
       if (!/\/i\/api\/graphql\/[^/]+\/Bookmarks(\?|$)/.test(res.url())) return;
       try {
@@ -295,7 +297,10 @@ async function main() {
         let fresh = 0;
         for (const r of tweets) { if (!records.has(r.id)) { records.set(r.id, r); if (!known.has(r.id)) fresh++; } }
         log(`  page ${pagesSeen}: ${tweets.length} tweets, ${fresh} new`);
-        if (tweets.length && fresh === 0) allKnownPage = true;
+        // a single known page isn't proof we're caught up (a partial earlier
+        // run can leave unseen bookmarks behind it) — require a streak
+        knownStreak = tweets.length && fresh === 0 ? knownStreak + 1 : 0;
+        if (!FULL && knownStreak >= KNOWN_STREAK_STOP) allKnownPage = true;
       } catch { /* non-JSON / aborted */ }
     });
 

@@ -7,6 +7,7 @@
 # Env (set by the systemd unit; sensible defaults for manual runs):
 #   X_USERNAME / X_PASSWORD [/ X_EMAIL / X_TOTP_SECRET]   from sops bookmarks-sync-env
 #   BOOKMARKS_DATA_DIR   default /data/lazrossi/bookmarks-data (holds enriched.json + browser profile)
+#   SYNC_FULL=1   scroll the whole list instead of stopping at known pages (catch-up)
 # Auth trouble (exit 2 from the exporter) pings Signal.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -34,7 +35,7 @@ mkdir -p "$DATA_DIR/exports"
 
 # headful Chromium under a virtual display is the stealthy mode
 set +e
-(cd exporter && xvfb-run -a ./node_modules/.bin/tsx export.ts --out "$export_file" --known "$ENRICHED_PATH")
+(cd exporter && xvfb-run -a ./node_modules/.bin/tsx export.ts --out "$export_file" --known "$ENRICHED_PATH" ${SYNC_FULL:+--full})
 rc=$?
 set -e
 if [ $rc -eq 2 ]; then
