@@ -128,3 +128,12 @@ a.book-chip:hover { border-color: var(--accent); }
 .filter-input:focus { outline: none; border-color: var(--accent-2); }
 
 .stats { color: var(--muted); font-size: 13px; }
+
+/* threads */
+.thread-badge { color: var(--accent-2); font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.thread { display: flex; flex-direction: column; gap: 0; }
+.thread-post { position: relative; border-left: 2px solid var(--border, #2a2d34); padding: 2px 0 10px 12px; margin-left: 4px; }
+.thread-post.focal { border-left-color: var(--accent); background: rgba(255, 255, 255, 0.03); border-radius: 0 6px 6px 0; }
+.thread-n { color: var(--muted); font-size: 11px; margin-bottom: 2px; }
+.thread-gap { color: var(--muted); font-size: 12px; padding: 0 0 8px 16px; }
+.thread-toggle { align-self: flex-start; margin-top: 4px; background: none; border: 1px solid var(--accent-2); color: var(--accent-2); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; }

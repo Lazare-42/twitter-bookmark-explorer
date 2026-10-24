@@ -7,23 +7,46 @@ import { THEME_LABELS, purchaseLink, type Bookmark } from "./data";
 // Runtime data: when BOOKMARKS_DATA points at a readable file (written by the
 // daily sync job), serve it, re-reading whenever its mtime changes — no rebuild
 // needed to publish new bookmarks. Falls back to the snapshot bundled at build.
-let cache: { mtimeMs: number; data: Bookmark[] } | null = null;
+let cache: { key: string; data: Bookmark[] } | null = null;
+
+function mtime(path: string | undefined): number {
+  try {
+    return path ? fs.statSync(path).mtimeMs : 0;
+  } catch {
+    return 0;
+  }
+}
+
+// threads.json (BOOKMARKS_THREADS): { "<bookmarkId>": { checked, thread: ThreadPost[] | null } }
+function readThreads(path: string | undefined): Record<string, { thread: Bookmark["thread"] | null }> {
+  try {
+    return path ? JSON.parse(fs.readFileSync(path, "utf8")) : {};
+  } catch {
+    return {};
+  }
+}
 
 export function getBookmarks(): Bookmark[] {
   const path = process.env.BOOKMARKS_DATA;
+  const threadsPath = process.env.BOOKMARKS_THREADS;
+  const key = `${mtime(path)}:${mtime(threadsPath)}`;
+  if (cache && cache.key === key) return cache.data;
+  let base: Bookmark[] = raw as Bookmark[];
   if (path) {
     try {
-      const { mtimeMs } = fs.statSync(path);
-      if (!cache || cache.mtimeMs !== mtimeMs) {
-        cache = { mtimeMs, data: JSON.parse(fs.readFileSync(path, "utf8")) as Bookmark[] };
-      }
-      return cache.data;
+      base = JSON.parse(fs.readFileSync(path, "utf8")) as Bookmark[];
     } catch {
       /* missing/mid-write/corrupt → keep last good copy or bundled snapshot */
       if (cache) return cache.data;
     }
   }
-  return raw as Bookmark[];
+  const threads = readThreads(threadsPath);
+  const data = base.map((b) => {
+    const t = threads[b.id]?.thread;
+    return t && t.length > 1 ? { ...b, thread: t } : b;
+  });
+  cache = { key, data };
+  return data;
 }
 
 export function themeCounts(): { theme: string; label: string; count: number }[] {

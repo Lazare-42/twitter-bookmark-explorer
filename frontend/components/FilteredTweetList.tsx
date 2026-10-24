@@ -15,6 +15,7 @@ export default function FilteredTweetList({ items }: { items: Bookmark[] }) {
         b.screen_name.toLowerCase().includes(needle) ||
         b.name.toLowerCase().includes(needle) ||
         b.summary.toLowerCase().includes(needle) ||
+        (b.thread || []).some((p) => p.text.toLowerCase().includes(needle)) ||
         b.books.some(
           (bk) =>
             bk.title.toLowerCase().includes(needle) ||

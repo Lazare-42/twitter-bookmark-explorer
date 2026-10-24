@@ -17,6 +17,10 @@ export ENRICHED_PATH="$DATA_DIR/enriched.json"
 export COMPACT_PATH="$DATA_DIR/compact.json" STATE_PATH="$DATA_DIR/state.json"  # keep the git checkout clean
 export X_PROFILE="${X_PROFILE:-$DATA_DIR/x-profile}"
 mkdir -p "$DATA_DIR"
+# one browser at a time on the shared X profile (the thread backfill takes this lock too)
+exec 9>"$DATA_DIR/.browser.lock"
+flock -w 43200 9
+export BROWSER_LOCK_HELD=1
 # first run: seed the runtime file from the snapshot bundled in the repo
 [ -f "$ENRICHED_PATH" ] || cp frontend/data/enriched.json "$ENRICHED_PATH"
 [ -f "$COMPACT_PATH" ] || cp data/compact.json "$COMPACT_PATH"
@@ -47,6 +51,10 @@ elif [ $rc -ne 0 ]; then
 fi
 
 scripts/ingest.sh "$export_file"
+
+# threads for the new bookmarks (+ trickle through any backfill backlog); never fatal
+THREADS_LIMIT="${THREADS_DAILY_LIMIT:-300}" scripts/fetch_threads.sh || \
+  notify "⚠️ bookmarks sync: thread fetch failed/stopped early (journalctl --user -u bookmarks-sync)"
 # keep only the 7 newest raw exports (each is tens of MB)
 ls -1t "$DATA_DIR"/exports/export-*.json 2>/dev/null | tail -n +8 | xargs -r rm -f
 echo "sync done: $(python3 -c "import json;print(len(json.load(open('$ENRICHED_PATH'))))") bookmarks in $ENRICHED_PATH"

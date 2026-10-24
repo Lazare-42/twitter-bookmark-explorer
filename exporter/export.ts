@@ -48,11 +48,11 @@ const FULL = process.argv.includes("--full"); // ignore known ids: scroll to the
 const KNOWN_STREAK_STOP = 3; // stop after this many consecutive all-known pages
 if (!OUT && process.argv[1] === fileURLToPath(import.meta.url)) { console.error("usage: export.ts --out <file.json> [--known enriched.json] [--max-pages N]"); process.exit(1); }
 
-class AuthError extends Error {}
+export class AuthError extends Error {}
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const jitter = (a: number, b: number) => a + Math.random() * (b - a);
-const log = (...a: unknown[]) => console.log(new Date().toISOString().slice(11, 19), ...a);
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+export const jitter = (a: number, b: number) => a + Math.random() * (b - a);
+export const log = (...a: unknown[]) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 // cloakbrowser is ESM-only; import dynamically (same trick as the artnet scraper).
 const dynamicImport = new Function("s", "return import(s)") as (s: string) => Promise<any>;
@@ -108,7 +108,7 @@ async function askSignal(label: string, prompt: string): Promise<string> {
 }
 
 // ── launch ───────────────────────────────────────────────────────────────────
-async function launch() {
+export async function launch() {
   resolveNixChrome();
   const { launchPersistentContext } = await dynamicImport("cloakbrowser");
   mkdirSync(PROFILE, { recursive: true });
@@ -123,7 +123,7 @@ async function launch() {
   });
 }
 
-async function loggedIn(ctx: any): Promise<boolean> {
+export async function loggedIn(ctx: any): Promise<boolean> {
   const cookies = await ctx.cookies("https://x.com");
   return cookies.some((c: any) => c.name === "auth_token" && c.value);
 }
@@ -202,7 +202,7 @@ async function login(ctx: any, page: any): Promise<void> {
   if (!(await loggedIn(ctx))) throw new AuthError("login did not complete in 14 steps");
 }
 
-async function ensureSession(ctx: any, page: any): Promise<void> {
+export async function ensureSession(ctx: any, page: any): Promise<void> {
   await page.goto("https://x.com/i/bookmarks", { waitUntil: "domcontentloaded", timeout: 60_000 });
   await sleep(3500);
   if ((await loggedIn(ctx)) && !/\/(i\/flow\/)?login/.test(page.url())) { log("✓ session still valid"); return; }

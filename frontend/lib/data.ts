@@ -1,5 +1,12 @@
 export type Media = { type: string; thumb: string | null; orig: string | null };
 export type Book = { title: string; author: string | null };
+export type ThreadPost = {
+  id: string;
+  created_at: string;
+  text: string;
+  media: Media[];
+  links: string[];
+};
 export type Bookmark = {
   id: string;
   created_at: string;
@@ -16,6 +23,7 @@ export type Bookmark = {
   books: Book[];
   summary: string;
   links?: string[];
+  thread?: ThreadPost[]; // author's full thread (incl. this post), when it is part of one
   book_link?: string; // AI-judged: URL where the book itself can be bought/read
 };
 
@@ -49,3 +57,8 @@ export const THEME_LABELS: Record<string, string> = {
   science: "Science & Hardware",
   other: "Other",
 };
+
+// X's API returns HTML-escaped text.
+export function decodeEntities(t: string): string {
+  return t.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+}
