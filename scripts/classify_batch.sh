@@ -21,7 +21,7 @@ Output: ONLY a raw JSON array, one object per input tweet, same order:
 [{"id":"...","theme":"...","is_book":false,"books":[],"book_link":null,"summary":"..."}]
 No markdown fences, no prose.'
 
-result=$(cat "$in" | claude -p "$PROMPT" --model claude-haiku-4-5-20251001 --allowedTools "Read" --output-format text 2>/dev/null)
+result=$(cat "$in" | claude -p "$PROMPT" --model claude-haiku-4-5-20251001 --allowedTools "Read" --output-format text 2>"$out.err")
 # strip possible fences
 result=$(printf '%s' "$result" | sed -e 's/^```json//' -e 's/^```//' -e 's/```$//')
 printf '%s' "$result" | python3 -c '
@@ -31,5 +31,6 @@ s=raw[raw.find("["):raw.rfind("]")+1]
 data=json.loads(s)
 assert isinstance(data,list) and all("id" in x and "theme" in x for x in data)
 print(json.dumps(data,ensure_ascii=False))
-' > "$out.tmp" 2>/dev/null && mv "$out.tmp" "$out" || { rm -f "$out.tmp"; echo "FAIL $n"; exit 1; }
+' > "$out.tmp" 2>/dev/null && mv "$out.tmp" "$out" || { rm -f "$out.tmp"; printf '%s' "$result" > "$out.raw"; echo "FAIL $n: $(tail -c 300 "$out.err" 2>/dev/null) $(printf '%s' "$result" | head -c 200)"; exit 1; }
+rm -f "$out.err" "$out.raw"
 echo "OK $n"

@@ -91,10 +91,12 @@ async function main() {
 
   const ctx = await launch();
   try {
-    const page = ctx.pages()[0] ?? (await ctx.newPage());
+    let page = ctx.pages()[0] ?? (await ctx.newPage());
     await ensureSession(ctx, page);
-    let n = 0, found = 0, throttled = 0;
+    let n = 0, found = 0, throttled = 0, visits = 0;
     for (const id of todo) {
+      // a long-lived x.com tab keeps growing (SPA caches + captured responses) → recycle it
+      if (++visits % 50 === 0) { const fresh = await ctx.newPage(); await page.close().catch(() => {}); page = fresh; }
       let body: any = null, status = 0;
       const wait = page.waitForResponse((r: any) => /\/i\/api\/graphql\/[^/]+\/TweetDetail/.test(r.url()), { timeout: 25_000 }).catch(() => null);
       await page.goto(`https://x.com/i/status/${id}`, { waitUntil: "domcontentloaded", timeout: 45_000 }).catch(() => {});

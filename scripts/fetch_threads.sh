@@ -32,5 +32,5 @@ echo "pending thread checks: $(wc -l < "$DATA_DIR/thread-ids.txt")"
 
 [ -d exporter/node_modules ] || (cd exporter && npm install --no-audit --no-fund)
 cd exporter
-xvfb-run -a ./node_modules/.bin/tsx threads.ts --ids-file "$DATA_DIR/thread-ids.txt" \
+NODE_OPTIONS="--max-old-space-size=768 ${NODE_OPTIONS:-}" xvfb-run -a ./node_modules/.bin/tsx threads.ts --ids-file "$DATA_DIR/thread-ids.txt" \
   --out "$DATA_DIR/threads.json" ${THREADS_LIMIT:+--limit "$THREADS_LIMIT"}

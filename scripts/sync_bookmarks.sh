@@ -50,7 +50,11 @@ elif [ $rc -ne 0 ]; then
   exit $rc
 fi
 
-scripts/ingest.sh "$export_file"
+scripts/ingest.sh "$export_file" || {
+  rc=$?
+  notify "⚠️ bookmarks sync: classification failed (exit $rc) — new bookmarks not merged yet, next run retries. journalctl --user -u bookmarks-sync"
+  exit $rc
+}
 
 # threads for the new bookmarks (+ trickle through any backfill backlog); never fatal
 THREADS_LIMIT="${THREADS_DAILY_LIMIT:-300}" scripts/fetch_threads.sh || \

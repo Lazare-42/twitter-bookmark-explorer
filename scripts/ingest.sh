@@ -39,10 +39,11 @@ run_batches() {
   [ "$total" -eq 0 ] && return 0
   for tries in 1 2 3; do
     ls "$bdir" | sed 's/\.json$//' \
-      | BATCH_DIR="$bdir" CLS_DIR="$cdir" xargs -P 6 -I{} "$script" {}
-    n=$(ls "$cdir" | wc -l)
+      | BATCH_DIR="$bdir" CLS_DIR="$cdir" xargs -P 6 -I{} "$script" {} || true  # xargs exits 123 on any failed batch; the count below decides
+    n=$(ls "$cdir" | grep -c '\.json$' || true)
     [ "$n" -eq "$total" ] && return 0
     echo "retry: $n/$total done"
+    [ "$tries" -lt 3 ] && sleep 60
   done
   echo "ERROR: only $n/$total batches classified" >&2
   return 1
