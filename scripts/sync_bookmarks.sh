@@ -21,9 +21,9 @@ mkdir -p "$DATA_DIR"
 exec 9>"$DATA_DIR/.browser.lock"
 flock -w 43200 9
 export BROWSER_LOCK_HELD=1
-# first run: seed the runtime file from the snapshot bundled in the repo
-[ -f "$ENRICHED_PATH" ] || cp frontend/data/enriched.json "$ENRICHED_PATH"
-[ -f "$COMPACT_PATH" ] || cp data/compact.json "$COMPACT_PATH"
+# first run: seed from a local snapshot if there is one (never committed), else start empty
+[ -f "$ENRICHED_PATH" ] || { [ -f frontend/data/enriched.json ] && cp frontend/data/enriched.json "$ENRICHED_PATH" || echo '[]' > "$ENRICHED_PATH"; }
+[ -f "$COMPACT_PATH" ] || { [ -f data/compact.json ] && cp data/compact.json "$COMPACT_PATH" || echo '[]' > "$COMPACT_PATH"; }
 
 notify() {
   local tok="$HOME/.cache/signal-agent/arm.token"

@@ -1,12 +1,12 @@
 // Server-only data access (node:fs) — keep out of client components; they
 // import types/helpers from "./data" instead.
 import fs from "node:fs";
-import raw from "@/data/enriched.json";
 import { THEME_LABELS, purchaseLink, type Bookmark } from "./data";
 
-// Runtime data: when BOOKMARKS_DATA points at a readable file (written by the
-// daily sync job), serve it, re-reading whenever its mtime changes — no rebuild
-// needed to publish new bookmarks. Falls back to the snapshot bundled at build.
+// Runtime data: BOOKMARKS_DATA (default ./data/enriched.json, relative to the
+// server's cwd) is the file the daily sync job writes. It is re-read whenever its
+// mtime changes — no rebuild needed to publish new bookmarks. No data is bundled
+// into the build.
 let cache: { key: string; data: Bookmark[] } | null = null;
 
 function mtime(path: string | undefined): number {
@@ -27,18 +27,16 @@ function readThreads(path: string | undefined): Record<string, { thread: Bookmar
 }
 
 export function getBookmarks(): Bookmark[] {
-  const path = process.env.BOOKMARKS_DATA;
+  const path = process.env.BOOKMARKS_DATA || "data/enriched.json";
   const threadsPath = process.env.BOOKMARKS_THREADS;
   const key = `${mtime(path)}:${mtime(threadsPath)}`;
   if (cache && cache.key === key) return cache.data;
-  let base: Bookmark[] = raw as Bookmark[];
-  if (path) {
-    try {
-      base = JSON.parse(fs.readFileSync(path, "utf8")) as Bookmark[];
-    } catch {
-      /* missing/mid-write/corrupt → keep last good copy or bundled snapshot */
-      if (cache) return cache.data;
-    }
+  let base: Bookmark[] = [];
+  try {
+    base = JSON.parse(fs.readFileSync(path, "utf8")) as Bookmark[];
+  } catch {
+    /* missing/mid-write/corrupt → keep last good copy, else serve nothing */
+    if (cache) return cache.data;
   }
   const threads = readThreads(threadsPath);
   const data = base.map((b) => {

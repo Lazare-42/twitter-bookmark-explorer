@@ -8,11 +8,6 @@
 # AI pass 2 (book-only sweep of unflagged) → merge → data/state.json watermark.
 # Idempotent: re-running with the same export is a no-op. Per-run artifacts in
 # data/runs/<timestamp>/ so runs never collide.
-#
-# Afterwards (deploy):
-#   git add -A && git commit
-#   cd ~/nixos-config && nix flake update bookmarks-lazare
-#   sudo nixos-rebuild switch --flake ~/nixos-config#nixos
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -59,4 +54,4 @@ run_batches "$run_dir/batches2" "$run_dir/cls2" scripts/booksweep_batch.sh
 
 python3 scripts/ingest_merge.py sweep "$run_dir"
 
-echo "Done. Next: commit, then 'nix flake update bookmarks-lazare' in ~/nixos-config, then rebuild switch."
+echo "Done."

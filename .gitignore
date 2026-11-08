@@ -7,3 +7,9 @@ data/curl_cfg.txt
 data/cls_run.log
 data/site-password.txt
 data/runs/
+
+# personal data — never committed (the site and sync read/write it at runtime)
+/data/
+/frontend/data/
+/twitter-Bookmarks-*.json
+/logs
